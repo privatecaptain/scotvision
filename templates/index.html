@@ -47,14 +47,32 @@
             }
             var x = e.pageX - this.offsetLeft;
             var y = e.pageY - this.offsetTop;
-            var radius = 20; // or whatever
+            var radius = 25; // or whatever
             var fillColor = '#ff0000';
             ctx.globalCompositeOperation = 'destination-out';
             ctx.fillCircle(x, y, radius, fillColor);
         };
+        canvas.node.ontouchmove = function(e) {
+            if (!canvas.isDrawing) {
+               return;
+            }
+            var x = e.pageX - this.offsetLeft;
+            var y = e.pageY - this.offsetTop;
+            var radius = 25; // or whatever
+            var fillColor = '#ff0000';
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillCircle(x, y, radius, fillColor);
+        };
+
         canvas.node.onmousedown = function(e) {
             canvas.isDrawing = true;
         };
+       	canvas.node.ontouchstart = function(e) {
+       		canvas.isDrawing = true;
+       	}
+       	canvas.node.ontouchend = function (e) {
+       		canvas.isDrawing = false;
+       	}
         canvas.node.onmouseup = function(e) {
             canvas.isDrawing = false;
         };
