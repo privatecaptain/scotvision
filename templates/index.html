@@ -41,7 +41,23 @@
       ctx.drawImage(img,0,0,w,imgHeight);
 
       ctx.restore(); // Get rid of the clipping region
-}
+    }
+
+    function getPercentageErased(ctx,w,h) {
+
+        // get the pixel data from the canvas
+        var imgData = ctx.getImageData(0,0,w,h);
+        var totalPixels = w*h;
+        // loop through each pixel and count non-transparent pixels
+        var count=0;
+        for (var i=0;i<imgData.data.length;i+=4)
+          {
+              // nontransparent = imgData.data[i+3]==0
+              if(imgData.data[i+3]==0){ count++; }
+          }
+        return (count*100)/totalPixels;
+    }
+
 
     function init(container, width, height, fillColor) {
         var canvas = createCanvas(container, width, height);
@@ -78,13 +94,18 @@
             var fillColor = '#ff0000';
             ctx.globalCompositeOperation = 'destination-out';
             ctx.fillCircle(x, y, radius, fillColor);
+            var erased = getPercentageErased(ctx,width,height);
+            if (erased >= 60) {
+                alert('Done!');
+            };
+
         };
         canvas.node.onvmousemove = function(e) {
         	e.preventDefault();
             if (!canvas.isDrawing) {
                return;
             }
-            var x = e.pageX - this.offsetLeft;
+            var x = e.pageX - this.offsetLeft;1
             var y = e.pageY - this.offsetTop;
             var radius = 25; // or whatever
             var fillColor = '#ff0000';
