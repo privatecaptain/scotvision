@@ -95,8 +95,9 @@
             ctx.globalCompositeOperation = 'destination-out';
             ctx.fillCircle(x, y, radius, fillColor);
             var erased = getPercentageErased(ctx,width,height);
-            if (erased >= 60) {
-                alert('Done!');
+            if (erased >= 40) {
+                console.log('done');
+                ctx.clearRect(0,0,width,height);
             };
 
         };
@@ -148,6 +149,7 @@
     background-size: 531px 438px;
     width: 531px;
     height: 438px;
+    cursor: url(static/pointer.png),auto;
 }
 </style>
 </body>
