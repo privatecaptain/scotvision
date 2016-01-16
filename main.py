@@ -1,18 +1,29 @@
-from flask import Flask,render_template,request,make_response
+from flask import Flask,render_template,request,make_response,redirect,url_for
 import requests
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
 import os
 from werkzeug import secure_filename
 import uuid
+from flask.ext.login import LoginManager,login_user,logout_user,login_required,current_user
+from sqlalchemy.ext.hybrid import hybrid_property
+
 
 
 app = Flask(__name__,static_url_path="/static")
 app.debug = True
 
+# #LoginManager Instansiated
+login_manager = LoginManager()
+
+# #LoginManager Initialized
+login_manager.init_app(app) 
+
+login_manager.login_view = 'login'
+
 # App Config
 
-UPLOAD_FOLDER = '/Users/privatecaptain/scotvision/data/img'
+UPLOAD_FOLDER = '/Users/privatecaptain/freelancing/scotvision/data/img'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 SECRET_KEY = '$&^&B&*^*MN&*CDMN&*()B^&*()P^&_N*NM(P)*&D()&*^'
@@ -54,6 +65,60 @@ class Campaign(db.Model):
 
 	def __init__(self):
 		self.id = str(uuid.uuid4().hex)
+
+
+
+class User(db.Model):
+
+	id = db.Column(db.Integer, primary_key = True, autoincrement =True)
+	first_name = db.Column(db.String(254))
+	last_name = db.Column(db.String(254))
+
+	email = db.Column(db.String(254), unique=True)
+
+	#The email of the user sans the domain for e.g. 'neil' for 'neil@nasa.gov'
+	user_name = db.Column(db.String(254), unique=True)
+	_password = db.Column(db.String(254))
+
+	# Flag for session management
+	authenticated = db.Column(db.Boolean, default=False)
+
+	#Flag for email verification
+	email_confirmed = db.Column(db.Boolean, default=False)
+
+	# .password hybrid property
+	@hybrid_property
+	def password(self):
+		return self._password
+
+	# Hashing the password once and for all
+	@password.setter
+	def _set_password(self,plaintext):
+		self._password = bcrypt.generate_password_hash(plaintext)
+
+	# Password Matching
+	def is_password_correct(self,plaintext):
+		return bcrypt.check_password_hash(self._password, plaintext)
+
+
+	# Methods required for Flask-Login to work
+
+	def is_active(self):
+		return True
+
+	def get_id(self):
+		return unicode(self.id)
+
+	def is_authenticated(self):
+		return self.authenticated
+
+	def is_anonymous(self):
+		return False
+
+
+	def __repr__(self):
+		return 'User : {}'.format(self.first_name)
+
 
 
 def allowed_filename(filename):
@@ -116,11 +181,13 @@ def scratch():
 
 
 @app.route('/dashboard',methods=['GET','POST'])
+@login_required
 def dashboard():
 	return render_template('dashboard.html')
 
 
 @app.route('/create-campaign',methods=['GET','POST'])
+# @login_required
 def create_campaign():
 	
 	if request.method == 'POST':	
@@ -138,23 +205,72 @@ def create_campaign():
 			db.session.add(campaign)
 			db.session.commit()
 
-		return render_template('dashboard.html')
+		return redirect(url_for('dashboard'))
 
 	return render_template('campaign.html')
 
 
 
+@app.route('/login',methods=['GET','POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+
+    if request.method == 'POST':
+
+        params = request.form
+
+        email = str(params['email'])
+        password = params['password']
+        remember = False
+
+        if 'remember' in params:
+            remember = True
+
+        user = User.query.filter_by(email=email)
+        user = user.first()
+
+        if user:
+            
+            if bcrypt.check_password_hash(user.password,password):
+            
+                user.authenticated = True
+                db.session.add(user)
+                db.session.commit()
+                print login_user(user,remember=remember)
+                print current_user.first_name
+                return redirect('/service')
+
+        return render_template('login.html',no_acc=no_acc,wrong_pass=wrong_pass)
 
 
 
+@app.route("/logout", methods=["GET"])
+@login_required
+def logout():
+    """Logout the current user."""
+    user = current_user
+    user.authenticated = False
+    db.session.add(user)
+    db.session.commit()
+    logout_user()
+    return render_template("login.html")
 
 
 
+@app.route('/register',methods=['GET','POST'])
+def register():
+	
+	if request.method == 'POST':
 
+		params = request.form
 
+		user = User()
+		populate(user,params)
 
 
 
 
 if __name__ == '__main__':
 	app.run('0.0.0.0')
+
