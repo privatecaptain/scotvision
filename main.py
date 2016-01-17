@@ -1,4 +1,4 @@
-from flask import Flask,render_template,request,make_response,redirect,url_for
+from flask import Flask,render_template,request,make_response,redirect,url_for,session
 import requests
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
@@ -7,7 +7,7 @@ from werkzeug import secure_filename
 import uuid
 from flask.ext.login import LoginManager,login_user,logout_user,login_required,current_user
 from sqlalchemy.ext.hybrid import hybrid_property
-
+from flask.ext.bcrypt import Bcrypt
 
 
 app = Flask(__name__,static_url_path="/static")
@@ -21,6 +21,10 @@ login_manager.init_app(app)
 
 login_manager.login_view = 'login'
 
+# Bcrypt Config
+
+bcrypt = Bcrypt(app)
+
 # App Config
 
 UPLOAD_FOLDER = '/Users/privatecaptain/freelancing/scotvision/data/img'
@@ -28,7 +32,7 @@ ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 SECRET_KEY = '$&^&B&*^*MN&*CDMN&*()B^&*()P^&_N*NM(P)*&D()&*^'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:badman1108@localhost/scotvision'
-app.config['SECRET_KEY'] = 'faefea%$W#^TGVDSG'
+app.config['SECRET_KEY'] = 'faefea%$W#^TGV%$*$&^DSG'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
@@ -45,6 +49,8 @@ class Campaign(db.Model):
 	name = db.Column(db.String(254))
 	type = db.Column(db.String(254))
 	redirect_type = db.Column(db.String(254))
+	user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
+	percent_scratched = db.Column(db.Integer)
 
 	# Stats
 	total_cards = db.Column(db.Integer, default =0)
@@ -73,11 +79,11 @@ class User(db.Model):
 	id = db.Column(db.Integer, primary_key = True, autoincrement =True)
 	first_name = db.Column(db.String(254))
 	last_name = db.Column(db.String(254))
+	campaigns = db.relationship('Campaign', backref='user', lazy='dynamic')
 
 	email = db.Column(db.String(254), unique=True)
 
-	#The email of the user sans the domain for e.g. 'neil' for 'neil@nasa.gov'
-	user_name = db.Column(db.String(254), unique=True)
+	
 	_password = db.Column(db.String(254))
 
 	# Flag for session management
@@ -121,6 +127,21 @@ class User(db.Model):
 
 
 
+@login_manager.user_loader
+def load_user(id):
+    '''User Loader for flask-login 
+    :params
+     user_id -> email 
+    '''
+    user = User.query.get(id)
+    print user.first_name,id
+    if user:
+        return user
+    else:
+        return None
+
+
+
 def allowed_filename(filename):
 	return '.' in filename and \
 		filename.rsplit('.',1)[1] in ALLOWED_EXTENSIONS
@@ -150,7 +171,7 @@ def populate(campaign,params):
 
 @app.route('/',methods=['GET','POST'])
 def index():
-	return render_template('index.html')
+	return redirect(url_for('dashboard'))
 
 
 @app.route('/scratch',methods=['POST'])
@@ -183,11 +204,12 @@ def scratch():
 @app.route('/dashboard',methods=['GET','POST'])
 @login_required
 def dashboard():
-	return render_template('dashboard.html')
+	campaigns = Campaign.query.filter_by(user_id=current_user.id)
+	return render_template('dashboard.html',campaigns=campaigns)
 
 
 @app.route('/create-campaign',methods=['GET','POST'])
-# @login_required
+@login_required
 def create_campaign():
 	
 	if request.method == 'POST':	
@@ -232,16 +254,14 @@ def login():
 
         if user:
             
-            if bcrypt.check_password_hash(user.password,password):
-            
-                user.authenticated = True
-                db.session.add(user)
-                db.session.commit()
-                print login_user(user,remember=remember)
-                print current_user.first_name
-                return redirect('/service')
+            if user.is_password_correct(password):
+				login_user(user)
+				user.authenticated = True
+				db.session.add(user)
+				db.session.commit()
+				return redirect(url_for('dashboard'))
 
-        return render_template('login.html',no_acc=no_acc,wrong_pass=wrong_pass)
+        return render_template('login.html',fail=True)
 
 
 
@@ -258,7 +278,7 @@ def logout():
 
 
 
-@app.route('/register',methods=['GET','POST'])
+@app.route('/signup',methods=['GET','POST'])
 def register():
 	
 	if request.method == 'POST':
@@ -267,6 +287,60 @@ def register():
 
 		user = User()
 		populate(user,params)
+
+		# Commit db object
+		db.session.add(user)
+		db.session.commit()
+
+		return redirect(url_for('login'))
+
+	return render_template('signup.html')
+
+
+
+@app.route('/view-campaign')
+@login_required
+def view_campaign():
+
+	id = request.args.get('id')
+
+	# Get campaign by id
+	campaign = Campaign.query.get(id)
+
+	if campaign:
+
+		# Check User Access
+
+		if campaign.user_id == current_user.id:
+
+			return render_template('view_campaign.html',campaign=campaign)
+
+		return render_template('view_campaign.html',access=False)
+
+	return render_template('view_campaign.html',not_found=True)
+
+
+
+def generate_js(campaign):
+
+	js = render_template('gen_js.html',campaign=campaign)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

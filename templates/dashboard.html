@@ -1,0 +1,39 @@
+{% extends 'campaign.html' %}
+
+
+{% block body %}
+
+<div class="container">
+	<div class="row">	
+		<table class="table">
+	    <thead>
+	      <tr>
+	        <th>#</th>
+	        <th>Campaign Name</th>
+	        <th>Type</th>
+	      </tr>
+	    </thead>
+	    <tbody>
+	{% for i in campaigns %}
+	      <tr>
+	        <td>{{loop.index}}</td>
+	        <td><a href="/view-campaign?id={{i['id']}}" target="_blank">{{i['name']}}</a></td>
+	        <td>{{i['type']}}</td>
+	      </tr>
+	{% endfor %}
+	    </tbody>
+	  </table>
+	</div>
+</div>
+
+<style type="text/css">
+
+.table{
+	background-color: white;
+}
+
+</style>
+
+
+
+{% endblock %}

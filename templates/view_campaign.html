@@ -1,0 +1,15 @@
+{% extends 'campaign.html' %}
+
+
+{% block body %}
+
+<h3>{{campaign['name']}}</h3>
+
+<li>id :  {{campaign['id']}}</li>
+<li>type : {{campaign['type']}}</li>
+<li>total cards : {{campaign['total_cards']}} </li>
+<li>winners :  {{campaign['winners']}}</li>
+<li>losers :  {{campaign['losers']}}</li>
+<li>total cards scratched : {{campaign['scratched']}} </li>
+
+{% endblock %}

@@ -13,7 +13,7 @@
 
 </head>
 
-
+{% block body %}
 <body>
 <div class="container">
 	<h3>Create Campaign</h3>
@@ -46,6 +46,18 @@
 		<h3 class="fs-subtitle">Configure your Campaign</h3>
 		<input type="text" name="total_cards" placeholder="Total Cards" />
 		<input type="text" name="total_winners" placeholder="No. of Winners" />
+
+		<select name="percent_scratched">
+			<option value="10">10%</option>
+			<option value="15">15%</option>
+			<option value="20">20%</option>
+			<option value="25">25%</option>
+			<option value="30">30%</option>
+			<option value="35">35%</option>
+			<option value="40">40%</option>
+
+		</select>
+
 		<input type="text" name="closed_text" placeholder="Competition Closed Text" />
 		<input type="button" name="previous" class="previous action-button" value="Previous" />
 		<input type="button" name="next" class="next action-button" value="Next" />
@@ -81,4 +93,5 @@
 </div>
 </div>
 </body>
+{% endblock %}
 </html>

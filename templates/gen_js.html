@@ -1,10 +1,13 @@
+<script>
 $(document).ready(function() {
     // Creates a new canvas element and appends it as a child
     // to the parent element, and returns the reference to
     // the newly created canvas element
 
-
-    var CAMPAIGN_ID = 1;
+    // Campaign INFO 
+    var CAMPAIGN_ID = {{campaign['id']}};
+    var PERCENT_ERASED = {{campaign['percent_scratched']}}
+    var RESULT;
 
     function scratchCall(id,result){
         $.ajax({
@@ -14,11 +17,6 @@ $(document).ready(function() {
             dataType: "json",
 
         });
-
-        $.ajax({
-            url: 'https://www.google.com',
-            
-        })
     }
 
 
@@ -102,10 +100,10 @@ $(document).ready(function() {
             ctx.globalCompositeOperation = 'destination-out';
             ctx.fillCircle(x, y, radius, fillColor);
             var erased = getPercentageErased(ctx,width,height);
-            if (erased >= 40) {
+            if (erased >= PERCENT_ERASED) {
                 console.log('done');
                 ctx.clearRect(0,0,width,height);
-                scratchCall(CAMPAIGN_ID,'win');
+                scratchCall(CAMPAIGN_ID,RESULT);
                 result = true;
             };
 
@@ -149,3 +147,4 @@ $(document).ready(function() {
     init(container, 420, 438, '#ddd');
 
 });
+</script>
