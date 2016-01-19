@@ -312,24 +312,53 @@ def view_campaign():
 		# Check User Access
 
 		if campaign.user_id == current_user.id:
-
-			return render_template('view_campaign.html',campaign=campaign)
+			js = generate_js(campaign)
+			return render_template('view_campaign.html',campaign=campaign,js=js)
 
 		return render_template('view_campaign.html',access=False)
 
 	return render_template('view_campaign.html',not_found=True)
 
 
+@app.route('/validate-card',methods=['POST'])
+def validate_card():
+
+	params = request.form
+
+	id = params['id']
+
+	if not check_lock():
+		
+
+
 
 def generate_js(campaign):
-
 	js = render_template('gen_js.html',campaign=campaign)
+	return js
 
 
+def lock_session(id):
+	session['lock'] = id
 
 
+def remove_lock(id):
+	if 'lock' in session:
+		session.pop('lock',None)
+	return True
 
+def check_lock(id):
+	if 'lock' in session:
+		return True
+	return False
 
+def chances_left():
+	if 'chances' in session:
+		if session['chances'] > 0:
+			session['chances'] -= 1
+			return True
+		return False
+
+	return False
 
 
 

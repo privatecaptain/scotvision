@@ -19,6 +19,16 @@ $(document).ready(function() {
         });
     }
 
+    function validateCard(id){
+        $.ajax({
+            url: "/validate-card",
+            type: "POST",
+            data: {"id" : id},
+            success: function (data){
+                
+            }
+        })
+    }
 
     function createCanvas(parent, width, height) {
         var canvas = {};
